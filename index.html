@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Generate realistic synthetic datasets for various industries. Export to CSV or XLSX format.">
+  <title>DataForge — Synthetic Data Generator</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-badge">
+      <span class="dot"></span>
+      <span>Data Science Tool</span>
+    </div>
+    <h1>⚡ DataForge</h1>
+    <p>Generate industry-realistic synthetic datasets in seconds</p>
+  </header>
+
+  <main class="container">
+    <div class="main-grid">
+      <!-- Sidebar Controls -->
+      <aside class="sidebar">
+        <!-- Industry Selection Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🏭</div>
+            <h2>Industry</h2>
+          </div>
+
+          <div class="industry-grid" id="industryGrid">
+            <div class="industry-option selected" data-industry="healthcare">
+              <span class="emoji">🏥</span>
+              <span>Healthcare</span>
+            </div>
+            <div class="industry-option" data-industry="finance">
+              <span class="emoji">💰</span>
+              <span>Finance</span>
+            </div>
+            <div class="industry-option" data-industry="retail">
+              <span class="emoji">🛒</span>
+              <span>Retail</span>
+            </div>
+            <div class="industry-option" data-industry="hr">
+              <span class="emoji">👥</span>
+              <span>HR</span>
+            </div>
+            <div class="industry-option" data-industry="manufacturing">
+              <span class="emoji">🏭</span>
+              <span>Manufacturing</span>
+            </div>
+            <div class="industry-option" data-industry="education">
+              <span class="emoji">🎓</span>
+              <span>Education</span>
+            </div>
+            <div class="industry-option" data-industry="realestate">
+              <span class="emoji">🏠</span>
+              <span>Real Estate</span>
+            </div>
+            <div class="industry-option" data-industry="logistics">
+              <span class="emoji">📦</span>
+              <span>Logistics</span>
+            </div>
+          </div>
+
+          <!-- Schema Preview -->
+          <div class="schema-preview" id="schemaPreview">
+            <div class="schema-title">
+              <span>📋</span>
+              <span>Schema Columns</span>
+            </div>
+            <div class="schema-columns" id="schemaColumns">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">⚙️</div>
+            <h2>Configuration</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="rowCount">Number of Rows</label>
+            <input type="number" id="rowCount" value="100" min="1" max="10000" step="1">
+          </div>
+
+          <div class="form-group">
+            <label for="startDate">Date Range Start</label>
+            <input type="date" id="startDate" value="2023-01-01">
+          </div>
+
+          <div class="form-group">
+            <label for="endDate">Date Range End</label>
+            <input type="date" id="endDate" value="2024-12-31">
+          </div>
+
+          <!-- Advanced Options Toggle -->
+          <div class="advanced-toggle" id="advancedToggle">
+            <button type="button" class="advanced-toggle-btn" id="advancedToggleBtn">
+              <span class="toggle-icon">▶</span>
+              <span>Advanced Options</span>
+            </button>
+          </div>
+
+          <!-- Advanced Options Panel (Collapsible) -->
+          <div class="advanced-panel hidden" id="advancedPanel">
+            <div class="form-group">
+              <label for="dataQuality">Data Quality Preset</label>
+              <select id="dataQuality">
+                <option value="quick">Quick & Random — Fast generation, more variance</option>
+                <option value="balanced" selected>Balanced — Good mix of speed and realism</option>
+                <option value="high">High Fidelity — Maximum realism, slower</option>
+              </select>
+              <span class="form-hint">Controls overall data accuracy and realism</span>
+            </div>
+
+            <div class="form-group">
+              <label for="varianceLevel">Randomness / Variance</label>
+              <select id="varianceLevel">
+                <option value="low">Low — Tight distributions, predictable</option>
+                <option value="medium" selected>Medium — Natural variation</option>
+                <option value="high">High — Wide spread, more outliers</option>
+              </select>
+              <span class="form-hint">How much values deviate from typical patterns</span>
+            </div>
+
+            <div class="form-group">
+              <label for="nullPercentage">Missing Values (%)</label>
+              <select id="nullPercentage">
+                <option value="0" selected>0% — No missing data</option>
+                <option value="1">1% — Rare gaps</option>
+                <option value="5">5% — Some missing</option>
+                <option value="10">10% — Moderate gaps</option>
+                <option value="20">20% — Significant gaps</option>
+              </select>
+              <span class="form-hint">Percentage of cells with null/empty values</span>
+            </div>
+
+            <div class="form-group">
+              <label for="outlierFrequency">Outlier Frequency</label>
+              <select id="outlierFrequency">
+                <option value="none">None — Clean data only</option>
+                <option value="rare" selected>Rare — ~1% unusual values</option>
+                <option value="occasional">Occasional — ~5% edge cases</option>
+                <option value="frequent">Frequent — ~10% extreme values</option>
+              </select>
+              <span class="form-hint">Frequency of unusual or extreme data points</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="generateBtn">
+            <span>⚡</span>
+            <span>Generate Data</span>
+          </button>
+        </div>
+
+        <!-- Export Card -->
+        <div class="card" id="exportCard">
+          <div class="card-header">
+            <div class="card-icon">📥</div>
+            <h2>Export</h2>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-secondary" id="exportCsvBtn" disabled>
+              <span>📄</span>
+              <span>Export CSV</span>
+            </button>
+            <button class="btn btn-success" id="exportXlsxBtn" disabled>
+              <span>📊</span>
+              <span>Export XLSX</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-icon">📊</div>
+          <h2>Data Preview</h2>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-value" id="statRows">0</div>
+            <div class="stat-label">Rows</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statColumns">0</div>
+            <div class="stat-label">Columns</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statIndustry">—</div>
+            <div class="stat-label">Industry</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statSize">0 KB</div>
+            <div class="stat-label">Est. Size</div>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container" id="tableContainer">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">📊</div>
+            <h3>No Data Generated</h3>
+            <p>Select an industry and click "Generate Data" to create your synthetic dataset.</p>
+          </div>
+
+          <table class="data-table hidden" id="dataTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination hidden" id="pagination">
+          <button class="pagination-btn" id="prevPage" disabled>←</button>
+          <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
+          <button class="pagination-btn" id="nextPage" disabled>→</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- SheetJS for XLSX export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <!-- Application Scripts -->
+  <script src="js/generators/base.js"></script>
+  <script src="js/generators/healthcare.js"></script>
+  <script src="js/generators/finance.js"></script>
+  <script src="js/generators/retail.js"></script>
+  <script src="js/generators/hr.js"></script>
+  <script src="js/generators/manufacturing.js"></script>
+  <script src="js/generators/education.js"></script>
+  <script src="js/generators/realestate.js"></script>
+  <script src="js/generators/logistics.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
