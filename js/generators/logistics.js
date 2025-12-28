@@ -208,4 +208,4 @@ const LogisticsGenerator = {
     }
 };
 
-window.LogisticsGenerator = LogisticsGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).LogisticsGenerator = LogisticsGenerator;

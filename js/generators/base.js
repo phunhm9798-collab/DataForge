@@ -7,7 +7,7 @@ const DataGen = {
   // ============================================
   // RANDOM UTILITIES
   // ============================================
-  
+
   /**
    * Get random integer between min and max (inclusive)
    */
@@ -36,7 +36,7 @@ const DataGen = {
   weightedPick(items) {
     const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
     let random = Math.random() * totalWeight;
-    
+
     for (const item of items) {
       random -= item.weight;
       if (random <= 0) return item.value;
@@ -92,7 +92,7 @@ const DataGen = {
    * Generate UUID v4
    */
   generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       const r = Math.random() * 16 | 0;
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
@@ -104,23 +104,23 @@ const DataGen = {
   // ============================================
 
   firstNames: {
-    male: ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Joseph', 'Charles', 'Thomas', 'Daniel', 
-           'Matthew', 'Anthony', 'Mark', 'Steven', 'Paul', 'Andrew', 'Joshua', 'Kenneth', 'Kevin', 'Brian',
-           'George', 'Timothy', 'Ronald', 'Edward', 'Jason', 'Jeffrey', 'Ryan', 'Jacob', 'Gary', 'Nicholas',
-           'Eric', 'Jonathan', 'Stephen', 'Larry', 'Justin', 'Scott', 'Brandon', 'Benjamin', 'Samuel', 'Raymond',
-           'Alexander', 'Patrick', 'Frank', 'Gregory', 'Jack', 'Dennis', 'Jerry', 'Tyler', 'Aaron', 'Jose'],
+    male: ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Joseph', 'Charles', 'Thomas', 'Daniel',
+      'Matthew', 'Anthony', 'Mark', 'Steven', 'Paul', 'Andrew', 'Joshua', 'Kenneth', 'Kevin', 'Brian',
+      'George', 'Timothy', 'Ronald', 'Edward', 'Jason', 'Jeffrey', 'Ryan', 'Jacob', 'Gary', 'Nicholas',
+      'Eric', 'Jonathan', 'Stephen', 'Larry', 'Justin', 'Scott', 'Brandon', 'Benjamin', 'Samuel', 'Raymond',
+      'Alexander', 'Patrick', 'Frank', 'Gregory', 'Jack', 'Dennis', 'Jerry', 'Tyler', 'Aaron', 'Jose'],
     female: ['Mary', 'Patricia', 'Jennifer', 'Linda', 'Barbara', 'Elizabeth', 'Susan', 'Jessica', 'Sarah', 'Karen',
-             'Lisa', 'Nancy', 'Betty', 'Margaret', 'Sandra', 'Ashley', 'Kimberly', 'Emily', 'Donna', 'Michelle',
-             'Dorothy', 'Carol', 'Amanda', 'Melissa', 'Deborah', 'Stephanie', 'Rebecca', 'Sharon', 'Laura', 'Cynthia',
-             'Kathleen', 'Amy', 'Angela', 'Shirley', 'Anna', 'Brenda', 'Pamela', 'Emma', 'Nicole', 'Helen',
-             'Samantha', 'Katherine', 'Christine', 'Debra', 'Rachel', 'Carolyn', 'Janet', 'Catherine', 'Maria', 'Heather']
+      'Lisa', 'Nancy', 'Betty', 'Margaret', 'Sandra', 'Ashley', 'Kimberly', 'Emily', 'Donna', 'Michelle',
+      'Dorothy', 'Carol', 'Amanda', 'Melissa', 'Deborah', 'Stephanie', 'Rebecca', 'Sharon', 'Laura', 'Cynthia',
+      'Kathleen', 'Amy', 'Angela', 'Shirley', 'Anna', 'Brenda', 'Pamela', 'Emma', 'Nicole', 'Helen',
+      'Samantha', 'Katherine', 'Christine', 'Debra', 'Rachel', 'Carolyn', 'Janet', 'Catherine', 'Maria', 'Heather']
   },
 
   lastNames: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-              'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
-              'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson',
-              'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
-              'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'],
+    'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
+    'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson',
+    'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
+    'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'],
 
   generateFirstName(gender = null) {
     if (!gender) {
@@ -171,8 +171,8 @@ const DataGen = {
 
   streetTypes: ['St', 'Ave', 'Blvd', 'Dr', 'Ln', 'Rd', 'Way', 'Ct', 'Pl', 'Cir'],
   streetNames: ['Main', 'Oak', 'Maple', 'Cedar', 'Pine', 'Elm', 'Washington', 'Lake', 'Hill', 'Park',
-                'River', 'Forest', 'Spring', 'Valley', 'Sunset', 'Highland', 'Meadow', 'Garden', 'Church', 'Mill'],
-  
+    'River', 'Forest', 'Spring', 'Valley', 'Sunset', 'Highland', 'Meadow', 'Garden', 'Church', 'Mill'],
+
   cities: [
     { city: 'New York', state: 'NY', zip: '10001' },
     { city: 'Los Angeles', state: 'CA', zip: '90001' },
@@ -284,8 +284,8 @@ const DataGen = {
   // ============================================
 
   companies: ['Acme Corp', 'TechFlow Inc', 'Global Solutions', 'Innovate Labs', 'Summit Enterprises',
-              'NextGen Systems', 'Prime Industries', 'Apex Holdings', 'United Dynamics', 'CoreTech',
-              'BlueSky Ventures', 'Quantum Analytics', 'FuturePath', 'Stellar Group', 'Pioneer Tech'],
+    'NextGen Systems', 'Prime Industries', 'Apex Holdings', 'United Dynamics', 'CoreTech',
+    'BlueSky Ventures', 'Quantum Analytics', 'FuturePath', 'Stellar Group', 'Pioneer Tech'],
 
   generateCompanyName() {
     return this.randomPick(this.companies);
@@ -309,7 +309,7 @@ const DataGen = {
   // ============================================
   // SCHEMA DEFINITIONS
   // ============================================
-  
+
   schemas: {
     healthcare: [
       { name: 'patient_id', type: 'ID' },
@@ -446,5 +446,11 @@ const DataGen = {
   }
 };
 
-// Make available globally
-window.DataGen = DataGen;
+// Make available globally (works in both browser and Web Worker)
+if (typeof globalThis !== 'undefined') {
+  globalThis.DataGen = DataGen;
+} else if (typeof self !== 'undefined') {
+  self.DataGen = DataGen;
+} else if (typeof window !== 'undefined') {
+  window.DataGen = DataGen;
+}

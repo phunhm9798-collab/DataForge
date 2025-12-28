@@ -148,4 +148,4 @@ const ManufacturingGenerator = {
     }
 };
 
-window.ManufacturingGenerator = ManufacturingGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).ManufacturingGenerator = ManufacturingGenerator;

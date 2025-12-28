@@ -160,4 +160,4 @@ const RealEstateGenerator = {
     }
 };
 
-window.RealEstateGenerator = RealEstateGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).RealEstateGenerator = RealEstateGenerator;

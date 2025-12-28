@@ -179,4 +179,4 @@ const HRGenerator = {
     }
 };
 
-window.HRGenerator = HRGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).HRGenerator = HRGenerator;

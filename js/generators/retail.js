@@ -220,4 +220,4 @@ const RetailGenerator = {
     }
 };
 
-window.RetailGenerator = RetailGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).RetailGenerator = RetailGenerator;

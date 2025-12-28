@@ -205,4 +205,4 @@ const EducationGenerator = {
     }
 };
 
-window.EducationGenerator = EducationGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).EducationGenerator = EducationGenerator;

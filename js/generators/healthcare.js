@@ -111,4 +111,4 @@ const HealthcareGenerator = {
     }
 };
 
-window.HealthcareGenerator = HealthcareGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).HealthcareGenerator = HealthcareGenerator;

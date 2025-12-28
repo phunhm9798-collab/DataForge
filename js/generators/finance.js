@@ -160,4 +160,4 @@ const FinanceGenerator = {
     }
 };
 
-window.FinanceGenerator = FinanceGenerator;
+(typeof globalThis !== 'undefined' ? globalThis : (typeof self !== 'undefined' ? self : window)).FinanceGenerator = FinanceGenerator;
