@@ -20,6 +20,9 @@
 </head>
 
 <body>
+  <!-- Skip Link for Accessibility -->
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
+
   <!-- Header -->
   <header class="header">
     <div class="theme-toggle">
@@ -290,6 +293,21 @@
           </div>
         </div>
 
+        <!-- Quick Statistics Panel -->
+        <div class="stats-panel" id="statsPanel">
+          <div class="stats-panel-header" id="statsPanelToggle" role="button" tabindex="0" aria-expanded="true">
+            <span>📈</span>
+            <h4>Quick Statistics</h4>
+            <span class="stats-panel-toggle">▼</span>
+          </div>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-item">
+              <div class="stat-item-header">No data</div>
+              <div class="stat-item-value">—</div>
+              <div class="stat-item-column">Generate data to see stats</div>
+            </div>
+          </div>
+        </div>
 
         <!-- Table Container -->
         <div class="table-container" id="tableContainer">
@@ -331,6 +349,7 @@
   <script src="js/generators/education.js"></script>
   <script src="js/generators/realestate.js"></script>
   <script src="js/generators/logistics.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>
 

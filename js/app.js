@@ -15,6 +15,9 @@
         rowsPerPage: 50,
         selectedColumns: [],
         searchQuery: '',
+        // Sorting state
+        sortColumn: null,
+        sortDirection: 'asc', // 'asc' or 'desc'
         // Virtual scrolling state
         virtualScroll: {
             rowHeight: 40,
@@ -25,6 +28,8 @@
         // Web Worker
         worker: null,
         isGenerating: false,
+        // Statistics collapsed state
+        statsCollapsed: false,
         // Advanced options state
         advancedOptions: {
             dataQuality: 'balanced',
@@ -79,6 +84,8 @@
         state.searchQuery = '';
         state.currentPage = 1;
         state.isGenerating = false;
+        state.sortColumn = null;
+        state.sortDirection = 'asc';
 
         // Clear search
         if (elements.tableSearch) {
@@ -92,6 +99,9 @@
         renderTable();
         updateStats();
         enableExport();
+
+        // Cache data for later retrieval
+        cacheCurrentData();
 
         // Reset button
         elements.generateBtn.disabled = false;
@@ -600,27 +610,45 @@
 
         const headers = Object.keys(displayData[0]);
 
-        // Render headers
+        // Render headers with sorting support and row number column
         elements.tableHead.innerHTML = `
       <tr>
-        ${headers.map(h => `<th>${formatHeader(h)}</th>`).join('')}
+        <th class="row-number" aria-label="Row number">#</th>
+        ${headers.map(h => {
+            const sortClass = state.sortColumn === h
+                ? (state.sortDirection === 'asc' ? 'sortable sort-asc' : 'sortable sort-desc')
+                : 'sortable';
+            return `<th class="${sortClass}" data-column="${h}" role="columnheader" aria-sort="${state.sortColumn === h ? state.sortDirection + 'ending' : 'none'
+                }">${formatHeader(h)}</th>`;
+        }).join('')}
       </tr>
     `;
+
+        // Add click handlers for sorting
+        elements.tableHead.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                handleColumnSort(th.dataset.column);
+            });
+        });
 
         // Get page data
         const startIndex = (state.currentPage - 1) * state.rowsPerPage;
         const endIndex = startIndex + state.rowsPerPage;
         const pageData = displayData.slice(startIndex, endIndex);
 
-        // Render rows
-        elements.tableBody.innerHTML = pageData.map(row => `
+        // Render rows with row numbers
+        elements.tableBody.innerHTML = pageData.map((row, idx) => `
       <tr>
+        <td class="row-number">${startIndex + idx + 1}</td>
         ${headers.map(h => `<td title="${escapeHtml(row[h])}">${formatCell(row[h])}</td>`).join('')}
       </tr>
     `).join('');
 
         // Update pagination
         updatePagination();
+
+        // Update statistics
+        updateStatistics();
     }
 
     /**
@@ -1219,6 +1247,226 @@
         };
     }
 
+    // ============================================
+    // COLUMN SORTING
+    // ============================================
+
+    /**
+     * Handle column header click for sorting
+     */
+    function handleColumnSort(columnName) {
+        if (state.sortColumn === columnName) {
+            // Toggle direction
+            state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            state.sortColumn = columnName;
+            state.sortDirection = 'asc';
+        }
+
+        sortData();
+        renderTable();
+    }
+
+    /**
+     * Sort the data based on current sort state
+     */
+    function sortData() {
+        if (!state.sortColumn) return;
+
+        const data = state.searchQuery ? state.filteredData : state.generatedData;
+
+        data.sort((a, b) => {
+            let valA = a[state.sortColumn];
+            let valB = b[state.sortColumn];
+
+            // Handle null/undefined
+            if (valA == null) return state.sortDirection === 'asc' ? 1 : -1;
+            if (valB == null) return state.sortDirection === 'asc' ? -1 : 1;
+
+            // Numeric comparison
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return state.sortDirection === 'asc' ? valA - valB : valB - valA;
+            }
+
+            // String comparison
+            valA = String(valA).toLowerCase();
+            valB = String(valB).toLowerCase();
+
+            if (valA < valB) return state.sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return state.sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    // ============================================
+    // COPY TO CLIPBOARD
+    // ============================================
+
+    /**
+     * Copy text to clipboard
+     */
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard!', 'success');
+        } catch (err) {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Copied to clipboard!', 'success');
+        }
+    }
+
+    /**
+     * Copy row data as JSON
+     */
+    function copyRowAsJson(rowIndex) {
+        const data = state.searchQuery ? state.filteredData : state.generatedData;
+        const row = data[rowIndex];
+        if (row) {
+            copyToClipboard(JSON.stringify(row, null, 2));
+        }
+    }
+
+    /**
+     * Copy cell value
+     */
+    function copyCellValue(value) {
+        copyToClipboard(value == null ? '' : String(value));
+    }
+
+    // ============================================
+    // STATISTICS PANEL
+    // ============================================
+
+    /**
+     * Calculate and display statistics for numeric columns
+     */
+    function updateStatistics() {
+        const data = state.generatedData;
+        const statsGrid = document.getElementById('statsGrid');
+
+        if (!data || data.length === 0 || !statsGrid) {
+            statsGrid.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-item-header">No data</div>
+                    <div class="stat-item-value">—</div>
+                    <div class="stat-item-column">Generate data to see stats</div>
+                </div>
+            `;
+            return;
+        }
+
+        const headers = Object.keys(data[0]);
+        const numericColumns = headers.filter(h => {
+            const firstNonNull = data.find(row => row[h] != null);
+            return firstNonNull && typeof firstNonNull[h] === 'number';
+        });
+
+        if (numericColumns.length === 0) {
+            statsGrid.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-item-header">No numeric columns</div>
+                    <div class="stat-item-value">—</div>
+                    <div class="stat-item-column">Statistics require numeric data</div>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+
+        // Calculate stats for first 4 numeric columns max
+        numericColumns.slice(0, 4).forEach(col => {
+            const values = data.map(row => row[col]).filter(v => v != null && typeof v === 'number');
+
+            if (values.length === 0) return;
+
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const sum = values.reduce((a, b) => a + b, 0);
+            const avg = sum / values.length;
+
+            html += `
+                <div class="stat-item">
+                    <div class="stat-item-header">Min</div>
+                    <div class="stat-item-value">${min.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div class="stat-item-column">${formatHeader(col)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-header">Max</div>
+                    <div class="stat-item-value">${max.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div class="stat-item-column">${formatHeader(col)}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-header">Average</div>
+                    <div class="stat-item-value">${avg.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div class="stat-item-column">${formatHeader(col)}</div>
+                </div>
+            `;
+        });
+
+        // Add total row count
+        html += `
+            <div class="stat-item">
+                <div class="stat-item-header">Total Rows</div>
+                <div class="stat-item-value">${data.length.toLocaleString()}</div>
+                <div class="stat-item-column">Dataset size</div>
+            </div>
+        `;
+
+        statsGrid.innerHTML = html;
+    }
+
+    /**
+     * Setup statistics panel toggle
+     */
+    function setupStatsPanel() {
+        const toggle = document.getElementById('statsPanelToggle');
+        const panel = document.getElementById('statsPanel');
+
+        if (toggle && panel) {
+            toggle.addEventListener('click', () => {
+                state.statsCollapsed = !state.statsCollapsed;
+                panel.classList.toggle('collapsed', state.statsCollapsed);
+                toggle.setAttribute('aria-expanded', !state.statsCollapsed);
+            });
+
+            // Keyboard support
+            toggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle.click();
+                }
+            });
+        }
+    }
+
+    // ============================================
+    // DATA CACHING
+    // ============================================
+
+    /**
+     * Save current data to cache
+     */
+    async function cacheCurrentData() {
+        if (state.generatedData.length === 0) return;
+
+        try {
+            await DataStorage.saveData(
+                state.generatedData,
+                state.selectedIndustry,
+                state.generatedData.length
+            );
+        } catch (err) {
+            console.warn('Failed to cache data:', err);
+        }
+    }
+
     // Initialize theme immediately (before DOM ready)
     initTheme();
 
@@ -1229,11 +1477,13 @@
             setupThemeToggle();
             setupKeyboardShortcuts();
             setupErrorHandling();
+            setupStatsPanel();
         });
     } else {
         init();
         setupThemeToggle();
         setupKeyboardShortcuts();
         setupErrorHandling();
+        setupStatsPanel();
     }
 })();
