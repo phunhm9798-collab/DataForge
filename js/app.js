@@ -10,8 +10,11 @@
     const state = {
         selectedIndustry: 'healthcare',
         generatedData: [],
+        filteredData: [],
         currentPage: 1,
         rowsPerPage: 50,
+        selectedColumns: [],
+        searchQuery: '',
         // Advanced options state
         advancedOptions: {
             dataQuality: 'balanced',
@@ -56,6 +59,7 @@
         bindEvents();
         updateSchemaPreview();
         setDefaultDates();
+        loadTemplatesList();
     }
 
     /**
@@ -91,7 +95,22 @@
             dataQuality: document.getElementById('dataQuality'),
             varianceLevel: document.getElementById('varianceLevel'),
             nullPercentage: document.getElementById('nullPercentage'),
-            outlierFrequency: document.getElementById('outlierFrequency')
+            outlierFrequency: document.getElementById('outlierFrequency'),
+            // New feature elements
+            templateName: document.getElementById('templateName'),
+            templateSelect: document.getElementById('templateSelect'),
+            saveTemplateBtn: document.getElementById('saveTemplateBtn'),
+            loadTemplateBtn: document.getElementById('loadTemplateBtn'),
+            deleteTemplateBtn: document.getElementById('deleteTemplateBtn'),
+            exportJsonBtn: document.getElementById('exportJsonBtn'),
+            exportSqlBtn: document.getElementById('exportSqlBtn'),
+            sqlTableName: document.getElementById('sqlTableName'),
+            tableSearch: document.getElementById('tableSearch'),
+            selectAllColumns: document.getElementById('selectAllColumns'),
+            deselectAllColumns: document.getElementById('deselectAllColumns'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressFill: document.getElementById('progressFill'),
+            progressText: document.getElementById('progressText')
         };
     }
 
@@ -142,6 +161,23 @@
         elements.varianceLevel.addEventListener('change', updateAdvancedOptions);
         elements.nullPercentage.addEventListener('change', updateAdvancedOptions);
         elements.outlierFrequency.addEventListener('change', updateAdvancedOptions);
+
+        // Template event handlers
+        elements.saveTemplateBtn.addEventListener('click', saveTemplate);
+        elements.loadTemplateBtn.addEventListener('click', loadTemplate);
+        elements.deleteTemplateBtn.addEventListener('click', deleteTemplate);
+        elements.templateSelect.addEventListener('change', handleTemplateSelectChange);
+
+        // New export handlers
+        elements.exportJsonBtn.addEventListener('click', handleExportJSON);
+        elements.exportSqlBtn.addEventListener('click', handleExportSQL);
+
+        // Search handler
+        elements.tableSearch.addEventListener('input', handleSearch);
+
+        // Column selection handlers
+        elements.selectAllColumns.addEventListener('click', selectAllColumns);
+        elements.deselectAllColumns.addEventListener('click', deselectAllColumns);
     }
 
     /**
@@ -233,12 +269,64 @@
     function updateSchemaPreview() {
         const schema = DataGen.getSchema(state.selectedIndustry);
 
+        // Initialize all columns as selected
+        state.selectedColumns = schema.map(col => col.name);
+
         elements.schemaColumns.innerHTML = schema.map(col => `
-      <span class="schema-column">
-        <span>${col.name}</span>
+      <label class="schema-column selected" data-column="${col.name}">
+        <input type="checkbox" checked data-column="${col.name}">
+        <span class="column-name">${col.name}</span>
         <span class="type">${col.type}</span>
-      </span>
+      </label>
     `).join('');
+
+        // Bind column checkbox events
+        elements.schemaColumns.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', handleColumnToggle);
+        });
+    }
+
+    /**
+     * Handle column checkbox toggle
+     */
+    function handleColumnToggle(e) {
+        const column = e.target.dataset.column;
+        const label = e.target.closest('.schema-column');
+
+        if (e.target.checked) {
+            if (!state.selectedColumns.includes(column)) {
+                state.selectedColumns.push(column);
+            }
+            label.classList.add('selected');
+        } else {
+            state.selectedColumns = state.selectedColumns.filter(c => c !== column);
+            label.classList.remove('selected');
+        }
+    }
+
+    /**
+     * Select all columns
+     */
+    function selectAllColumns() {
+        const schema = DataGen.getSchema(state.selectedIndustry);
+        state.selectedColumns = schema.map(col => col.name);
+
+        elements.schemaColumns.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = true;
+            cb.closest('.schema-column').classList.add('selected');
+        });
+    }
+
+    /**
+     * Deselect all columns
+     */
+    function deselectAllColumns() {
+        state.selectedColumns = [];
+
+        elements.schemaColumns.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.schema-column').classList.remove('selected');
+        });
     }
 
     /**
@@ -371,7 +459,10 @@
      * Render data table
      */
     function renderTable() {
-        if (state.generatedData.length === 0) {
+        // Use filtered data if searching, otherwise use all data
+        const displayData = state.searchQuery ? state.filteredData : state.generatedData;
+
+        if (displayData.length === 0 && state.generatedData.length === 0) {
             elements.emptyState.classList.remove('hidden');
             elements.dataTable.classList.add('hidden');
             elements.pagination.classList.add('hidden');
@@ -382,7 +473,14 @@
         elements.dataTable.classList.remove('hidden');
         elements.pagination.classList.remove('hidden');
 
-        const headers = Object.keys(state.generatedData[0]);
+        // Handle empty search results
+        if (displayData.length === 0 && state.searchQuery) {
+            elements.tableBody.innerHTML = `<tr><td colspan="100" style="text-align: center; padding: 2rem; color: var(--text-muted);">No results found for "${state.searchQuery}"</td></tr>`;
+            elements.tableHead.innerHTML = '';
+            return;
+        }
+
+        const headers = Object.keys(displayData[0]);
 
         // Render headers
         elements.tableHead.innerHTML = `
@@ -394,7 +492,7 @@
         // Get page data
         const startIndex = (state.currentPage - 1) * state.rowsPerPage;
         const endIndex = startIndex + state.rowsPerPage;
-        const pageData = state.generatedData.slice(startIndex, endIndex);
+        const pageData = displayData.slice(startIndex, endIndex);
 
         // Render rows
         elements.tableBody.innerHTML = pageData.map(row => `
@@ -445,18 +543,20 @@
      * Update pagination controls
      */
     function updatePagination() {
-        const totalPages = Math.ceil(state.generatedData.length / state.rowsPerPage);
+        const displayData = state.searchQuery ? state.filteredData : state.generatedData;
+        const totalPages = Math.max(1, Math.ceil(displayData.length / state.rowsPerPage));
 
         elements.pageInfo.textContent = `Page ${state.currentPage} of ${totalPages}`;
         elements.prevPage.disabled = state.currentPage === 1;
-        elements.nextPage.disabled = state.currentPage === totalPages;
+        elements.nextPage.disabled = state.currentPage === totalPages || totalPages === 0;
     }
 
     /**
      * Change page
      */
     function changePage(delta) {
-        const totalPages = Math.ceil(state.generatedData.length / state.rowsPerPage);
+        const displayData = state.searchQuery ? state.filteredData : state.generatedData;
+        const totalPages = Math.max(1, Math.ceil(displayData.length / state.rowsPerPage));
         const newPage = state.currentPage + delta;
 
         if (newPage >= 1 && newPage <= totalPages) {
@@ -492,8 +592,22 @@
      * Enable export buttons
      */
     function enableExport() {
-        elements.exportCsvBtn.disabled = state.generatedData.length === 0;
-        elements.exportXlsxBtn.disabled = state.generatedData.length === 0;
+        const hasData = state.generatedData.length > 0;
+        elements.exportCsvBtn.disabled = !hasData;
+        elements.exportXlsxBtn.disabled = !hasData;
+        elements.exportJsonBtn.disabled = !hasData;
+        elements.exportSqlBtn.disabled = !hasData;
+    }
+
+    /**
+     * Get export data (filtered by selected columns)
+     */
+    function getExportData() {
+        const data = state.searchQuery ? state.filteredData : state.generatedData;
+        if (state.selectedColumns.length === 0 || state.selectedColumns.length === Object.keys(data[0] || {}).length) {
+            return data;
+        }
+        return Exporter.filterColumns(data, state.selectedColumns);
     }
 
     /**
@@ -503,7 +617,7 @@
         if (state.generatedData.length === 0) return;
 
         const filename = `${state.selectedIndustry}_data_${getTimestamp()}`;
-        Exporter.downloadCSV(state.generatedData, filename);
+        Exporter.downloadCSV(getExportData(), filename);
         showToast('CSV file downloaded successfully!', 'success');
     }
 
@@ -514,13 +628,36 @@
         if (state.generatedData.length === 0) return;
 
         const filename = `${state.selectedIndustry}_data_${getTimestamp()}`;
-        const success = Exporter.downloadXLSX(state.generatedData, filename);
+        const success = Exporter.downloadXLSX(getExportData(), filename);
 
         if (success) {
             showToast('Excel file downloaded successfully!', 'success');
         } else {
             showToast('Error creating Excel file. CSV export is still available.', 'error');
         }
+    }
+
+    /**
+     * Handle JSON export
+     */
+    function handleExportJSON() {
+        if (state.generatedData.length === 0) return;
+
+        const filename = `${state.selectedIndustry}_data_${getTimestamp()}`;
+        Exporter.downloadJSON(getExportData(), filename);
+        showToast('JSON file downloaded successfully!', 'success');
+    }
+
+    /**
+     * Handle SQL export
+     */
+    function handleExportSQL() {
+        if (state.generatedData.length === 0) return;
+
+        const tableName = elements.sqlTableName.value || 'data_table';
+        const filename = `${state.selectedIndustry}_data_${getTimestamp()}`;
+        Exporter.downloadSQL(getExportData(), filename, tableName);
+        showToast('SQL file downloaded successfully!', 'success');
     }
 
     /**
@@ -552,6 +689,189 @@
             toast.style.animation = 'slideIn 0.3s ease-out reverse';
             setTimeout(() => toast.remove(), 300);
         }, 4000);
+    }
+
+    // ============================================
+    // TEMPLATE MANAGEMENT
+    // ============================================
+
+    const TEMPLATE_STORAGE_KEY = 'dataforge_templates';
+
+    /**
+     * Get all saved templates
+     */
+    function getTemplates() {
+        try {
+            return JSON.parse(localStorage.getItem(TEMPLATE_STORAGE_KEY)) || {};
+        } catch {
+            return {};
+        }
+    }
+
+    /**
+     * Save template to localStorage
+     */
+    function saveTemplate() {
+        const name = elements.templateName.value.trim();
+        if (!name) {
+            showToast('Please enter a template name', 'error');
+            return;
+        }
+
+        const templates = getTemplates();
+        templates[name] = {
+            industry: state.selectedIndustry,
+            rowCount: parseInt(elements.rowCount.value),
+            startDate: elements.startDate.value,
+            endDate: elements.endDate.value,
+            advancedOptions: { ...state.advancedOptions },
+            selectedColumns: [...state.selectedColumns]
+        };
+
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+        elements.templateName.value = '';
+        loadTemplatesList();
+        showToast(`Template "${name}" saved successfully!`, 'success');
+    }
+
+    /**
+     * Load template list into dropdown
+     */
+    function loadTemplatesList() {
+        const templates = getTemplates();
+        const names = Object.keys(templates);
+
+        elements.templateSelect.innerHTML = '<option value="">— Select a template —</option>' +
+            names.map(name => `<option value="${name}">${name}</option>`).join('');
+    }
+
+    /**
+     * Handle template dropdown change
+     */
+    function handleTemplateSelectChange() {
+        const hasSelection = elements.templateSelect.value !== '';
+        elements.loadTemplateBtn.disabled = !hasSelection;
+        elements.deleteTemplateBtn.disabled = !hasSelection;
+    }
+
+    /**
+     * Load selected template
+     */
+    function loadTemplate() {
+        const name = elements.templateSelect.value;
+        if (!name) return;
+
+        const templates = getTemplates();
+        const template = templates[name];
+        if (!template) return;
+
+        // Apply template settings
+        state.selectedIndustry = template.industry;
+        elements.rowCount.value = template.rowCount;
+        elements.startDate.value = template.startDate;
+        elements.endDate.value = template.endDate;
+
+        // Update industry selection UI
+        const currentSelected = elements.industryGrid.querySelector('.selected');
+        if (currentSelected) currentSelected.classList.remove('selected');
+        const newSelected = elements.industryGrid.querySelector(`[data-industry="${template.industry}"]`);
+        if (newSelected) newSelected.classList.add('selected');
+
+        // Apply advanced options
+        if (template.advancedOptions) {
+            state.advancedOptions = { ...template.advancedOptions };
+            elements.dataQuality.value = template.advancedOptions.dataQuality;
+            elements.varianceLevel.value = template.advancedOptions.varianceLevel;
+            elements.nullPercentage.value = template.advancedOptions.nullPercentage;
+            elements.outlierFrequency.value = template.advancedOptions.outlierFrequency;
+        }
+
+        // Update schema preview
+        updateSchemaPreview();
+
+        // Apply selected columns from template
+        if (template.selectedColumns && template.selectedColumns.length > 0) {
+            state.selectedColumns = template.selectedColumns;
+            elements.schemaColumns.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                const isSelected = template.selectedColumns.includes(cb.dataset.column);
+                cb.checked = isSelected;
+                cb.closest('.schema-column').classList.toggle('selected', isSelected);
+            });
+        }
+
+        showToast(`Template "${name}" loaded!`, 'success');
+    }
+
+    /**
+     * Delete selected template
+     */
+    function deleteTemplate() {
+        const name = elements.templateSelect.value;
+        if (!name) return;
+
+        const templates = getTemplates();
+        delete templates[name];
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+        loadTemplatesList();
+        elements.loadTemplateBtn.disabled = true;
+        elements.deleteTemplateBtn.disabled = true;
+        showToast(`Template "${name}" deleted`, 'success');
+    }
+
+    // ============================================
+    // SEARCH FUNCTIONALITY
+    // ============================================
+
+    /**
+     * Handle search input
+     */
+    function handleSearch() {
+        state.searchQuery = elements.tableSearch.value.toLowerCase().trim();
+        state.currentPage = 1;
+
+        if (!state.searchQuery) {
+            state.filteredData = [];
+            renderTable();
+            return;
+        }
+
+        // Filter data by search query
+        state.filteredData = state.generatedData.filter(row => {
+            return Object.values(row).some(value => {
+                if (value === null || value === undefined) return false;
+                return String(value).toLowerCase().includes(state.searchQuery);
+            });
+        });
+
+        renderTable();
+        updateStats();
+    }
+
+    // ============================================
+    // PROGRESS BAR
+    // ============================================
+
+    /**
+     * Show progress bar
+     */
+    function showProgress() {
+        elements.progressContainer.classList.remove('hidden');
+        updateProgress(0);
+    }
+
+    /**
+     * Hide progress bar
+     */
+    function hideProgress() {
+        elements.progressContainer.classList.add('hidden');
+    }
+
+    /**
+     * Update progress bar
+     */
+    function updateProgress(percent) {
+        elements.progressFill.style.width = `${percent}%`;
+        elements.progressText.textContent = `Generating... ${Math.round(percent)}%`;
     }
 
     // Initialize when DOM is ready

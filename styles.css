@@ -896,3 +896,183 @@ input:hover {
 .gap-md {
   gap: var(--space-md);
 }
+
+/* ============================================
+   NEW FEATURES STYLES
+   ============================================ */
+
+/* Template Controls */
+.template-controls {
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.saved-templates {
+  margin-top: var(--space-md);
+}
+
+.template-actions {
+  margin-top: var(--space-sm);
+}
+
+/* Button Variants */
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: var(--shadow-sm), 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.btn-warning:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 30px rgba(245, 158, 11, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: var(--shadow-sm), 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 30px rgba(239, 68, 68, 0.3);
+}
+
+.btn-sm {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.75rem;
+}
+
+/* Export Buttons Grid */
+.export-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.export-buttons .btn {
+  padding: var(--space-md);
+}
+
+/* Progress Container */
+.progress-container {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.progress-container .progress-bar {
+  margin-top: 0;
+  height: 8px;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: var(--space-sm);
+}
+
+/* Table Controls */
+.table-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.search-box input {
+  padding-left: 2.5rem;
+}
+
+.column-toggle {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Schema Column with Checkbox */
+.schema-column {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.schema-column:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+.schema-column.selected {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.schema-column input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.schema-column .column-name {
+  flex: 1;
+}
+
+/* Highlighted Search Results */
+.highlight {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    max-width: none;
+  }
+
+  .column-toggle {
+    justify-content: center;
+  }
+
+  .export-buttons {
+    grid-template-columns: 1fr;
+  }
+}

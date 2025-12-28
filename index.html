@@ -170,6 +170,42 @@
           </button>
         </div>
 
+        <!-- Templates Card -->
+        <div class="card" id="templatesCard">
+          <div class="card-header">
+            <div class="card-icon">💾</div>
+            <h2>Templates</h2>
+          </div>
+
+          <div class="template-controls">
+            <div class="form-group">
+              <label for="templateName">Template Name</label>
+              <input type="text" id="templateName" placeholder="e.g., My Healthcare Config">
+            </div>
+            <button class="btn btn-secondary btn-full" id="saveTemplateBtn">
+              <span>💾</span>
+              <span>Save Current Config</span>
+            </button>
+          </div>
+
+          <div class="saved-templates" id="savedTemplates">
+            <label>Saved Templates</label>
+            <select id="templateSelect">
+              <option value="">— Select a template —</option>
+            </select>
+            <div class="btn-group template-actions">
+              <button class="btn btn-secondary" id="loadTemplateBtn" disabled>
+                <span>📂</span>
+                <span>Load</span>
+              </button>
+              <button class="btn btn-danger" id="deleteTemplateBtn" disabled>
+                <span>🗑️</span>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Export Card -->
         <div class="card" id="exportCard">
           <div class="card-header">
@@ -177,14 +213,27 @@
             <h2>Export</h2>
           </div>
 
-          <div class="btn-group">
+          <div class="form-group">
+            <label for="sqlTableName">SQL Table Name</label>
+            <input type="text" id="sqlTableName" value="data_table" placeholder="table_name">
+          </div>
+
+          <div class="btn-group export-buttons">
             <button class="btn btn-secondary" id="exportCsvBtn" disabled>
               <span>📄</span>
-              <span>Export CSV</span>
+              <span>CSV</span>
             </button>
             <button class="btn btn-success" id="exportXlsxBtn" disabled>
               <span>📊</span>
-              <span>Export XLSX</span>
+              <span>XLSX</span>
+            </button>
+            <button class="btn btn-primary" id="exportJsonBtn" disabled>
+              <span>{ }</span>
+              <span>JSON</span>
+            </button>
+            <button class="btn btn-warning" id="exportSqlBtn" disabled>
+              <span>🗃️</span>
+              <span>SQL</span>
             </button>
           </div>
         </div>
@@ -216,6 +265,27 @@
             <div class="stat-label">Est. Size</div>
           </div>
         </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container hidden" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">Generating... 0%</div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="table-controls" id="tableControls">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="tableSearch" placeholder="Search data...">
+          </div>
+          <div class="column-toggle">
+            <button class="btn btn-secondary btn-sm" id="selectAllColumns">Select All</button>
+            <button class="btn btn-secondary btn-sm" id="deselectAllColumns">Deselect All</button>
+          </div>
+        </div>
+
 
         <!-- Table Container -->
         <div class="table-container" id="tableContainer">
