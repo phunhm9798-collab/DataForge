@@ -15,6 +15,16 @@
         rowsPerPage: 50,
         selectedColumns: [],
         searchQuery: '',
+        // Virtual scrolling state
+        virtualScroll: {
+            rowHeight: 40,
+            visibleRows: 20,
+            bufferRows: 5,
+            scrollTop: 0
+        },
+        // Web Worker
+        worker: null,
+        isGenerating: false,
         // Advanced options state
         advancedOptions: {
             dataQuality: 'balanced',
@@ -23,6 +33,83 @@
             outlierFrequency: 'rare'
         }
     };
+
+    // Initialize Web Worker if available
+    function initWorker() {
+        if (typeof Worker !== 'undefined') {
+            try {
+                state.worker = new Worker('js/worker.js');
+                state.worker.onmessage = handleWorkerMessage;
+                state.worker.onerror = handleWorkerError;
+                console.log('Web Worker initialized successfully');
+            } catch (e) {
+                console.warn('Failed to initialize Web Worker:', e);
+                state.worker = null;
+            }
+        }
+    }
+
+    // Handle messages from Web Worker
+    function handleWorkerMessage(e) {
+        const { type, payload } = e.data;
+
+        switch (type) {
+            case 'progress':
+                updateProgress(payload.progress);
+                break;
+            case 'complete':
+                handleGenerationComplete(payload.data);
+                break;
+            case 'error':
+                handleGenerationError(payload.message);
+                break;
+        }
+    }
+
+    // Handle Web Worker errors
+    function handleWorkerError(error) {
+        console.error('Worker error:', error);
+        handleGenerationError('Worker encountered an error');
+    }
+
+    // Handle generation complete
+    function handleGenerationComplete(data) {
+        state.generatedData = data;
+        state.filteredData = [];
+        state.searchQuery = '';
+        state.currentPage = 1;
+        state.isGenerating = false;
+
+        // Clear search
+        if (elements.tableSearch) {
+            elements.tableSearch.value = '';
+        }
+
+        // Hide progress
+        hideProgress();
+
+        // Update UI
+        renderTable();
+        updateStats();
+        enableExport();
+
+        // Reset button
+        elements.generateBtn.disabled = false;
+        elements.generateBtn.innerHTML = '<span>⚡</span><span>Generate Data</span>';
+
+        showToast(`Generated ${data.length.toLocaleString()} records successfully!`, 'success');
+    }
+
+    // Handle generation error
+    function handleGenerationError(message) {
+        state.isGenerating = false;
+        hideProgress();
+
+        elements.generateBtn.disabled = false;
+        elements.generateBtn.innerHTML = '<span>⚡</span><span>Generate Data</span>';
+
+        showToast(`Error: ${message}`, 'error');
+    }
 
     // Industry to Generator mapping
     const generators = {
@@ -60,6 +147,8 @@
         updateSchemaPreview();
         setDefaultDates();
         loadTemplatesList();
+        initWorker();
+        setupVirtualScroll();
     }
 
     /**
@@ -335,7 +424,8 @@
     function validateRowCount() {
         let value = parseInt(elements.rowCount.value);
         if (isNaN(value) || value < 1) value = 1;
-        if (value > 10000) value = 10000;
+        // Increased limit with Web Worker support
+        if (value > 100000) value = 100000;
         elements.rowCount.value = value;
     }
 
@@ -358,14 +448,53 @@
             return;
         }
 
+        // Prevent double generation
+        if (state.isGenerating) {
+            showToast('Generation already in progress', 'error');
+            return;
+        }
+
         // Apply advanced options before generation
         updateAdvancedOptions();
 
         // Show loading state
+        state.isGenerating = true;
         elements.generateBtn.disabled = true;
         elements.generateBtn.innerHTML = '<span class="loading-spinner"></span><span>Generating...</span>';
 
-        // Generate data (use setTimeout for UI responsiveness)
+        // Show progress bar for larger datasets
+        if (rowCount > 500) {
+            showProgress();
+        }
+
+        // Use Web Worker for large datasets, otherwise use sync generation
+        if (state.worker && rowCount >= 1000) {
+            generateWithWorker(rowCount, startDate, endDate);
+        } else {
+            generateSync(rowCount, startDate, endDate);
+        }
+    }
+
+    /**
+     * Generate data using Web Worker (non-blocking)
+     */
+    function generateWithWorker(rowCount, startDate, endDate) {
+        state.worker.postMessage({
+            type: 'generate',
+            payload: {
+                industry: state.selectedIndustry,
+                rowCount: rowCount,
+                startDate: startDate,
+                endDate: endDate,
+                advancedOptions: state.advancedOptions
+            }
+        });
+    }
+
+    /**
+     * Generate data synchronously (blocking, used for small datasets or fallback)
+     */
+    function generateSync(rowCount, startDate, endDate) {
         setTimeout(() => {
             try {
                 const generator = generators[state.selectedIndustry]();
@@ -375,25 +504,14 @@
                 data = applyNullValues(data);
                 data = applyOutliers(data);
 
-                state.generatedData = data;
-                state.currentPage = 1;
-
-                // Update UI
-                renderTable();
-                updateStats();
-                enableExport();
-
-                showToast(`Generated ${rowCount.toLocaleString()} records successfully!`, 'success');
+                handleGenerationComplete(data);
             } catch (error) {
                 console.error('Generation error:', error);
-                showToast('Error generating data. Please try again.', 'error');
-            } finally {
-                // Reset button
-                elements.generateBtn.disabled = false;
-                elements.generateBtn.innerHTML = '<span>⚡</span><span>Generate Data</span>';
+                handleGenerationError('Error generating data. Please try again.');
             }
-        }, 100);
+        }, 50);
     }
+
 
     /**
      * Apply null values based on configured percentage
@@ -873,6 +991,77 @@
         elements.progressFill.style.width = `${percent}%`;
         elements.progressText.textContent = `Generating... ${Math.round(percent)}%`;
     }
+
+    // ============================================
+    // VIRTUAL SCROLLING
+    // ============================================
+
+    /**
+     * Setup virtual scrolling for large datasets
+     */
+    function setupVirtualScroll() {
+        // Add scroll listener with debounce for performance
+        let scrollTimeout;
+        elements.tableContainer.addEventListener('scroll', function () {
+            if (scrollTimeout) {
+                cancelAnimationFrame(scrollTimeout);
+            }
+            scrollTimeout = requestAnimationFrame(() => {
+                state.virtualScroll.scrollTop = elements.tableContainer.scrollTop;
+                if (state.generatedData.length > 1000) {
+                    renderVirtualRows();
+                }
+            });
+        });
+    }
+
+    /**
+     * Render only visible rows for virtual scrolling (for very large datasets)
+     */
+    function renderVirtualRows() {
+        const displayData = state.searchQuery ? state.filteredData : state.generatedData;
+        if (displayData.length === 0) return;
+
+        const { rowHeight, bufferRows, scrollTop } = state.virtualScroll;
+        const containerHeight = elements.tableContainer.clientHeight;
+        const visibleCount = Math.ceil(containerHeight / rowHeight) + bufferRows * 2;
+
+        const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - bufferRows);
+        const endIndex = Math.min(displayData.length, startIndex + visibleCount);
+
+        const headers = Object.keys(displayData[0]);
+        const visibleData = displayData.slice(startIndex, endIndex);
+
+        // Calculate padding for virtual scroll effect
+        const paddingTop = startIndex * rowHeight;
+        const paddingBottom = (displayData.length - endIndex) * rowHeight;
+
+        // Render with virtual positioning
+        elements.tableBody.innerHTML =
+            `<tr style="height: ${paddingTop}px;"><td colspan="${headers.length}"></td></tr>` +
+            visibleData.map(row => `
+            <tr style="height: ${rowHeight}px;">
+                ${headers.map(h => `<td title="${escapeHtml(row[h])}">${formatCell(row[h])}</td>`).join('')}
+            </tr>
+            `).join('') +
+            `<tr style="height: ${paddingBottom}px;"><td colspan="${headers.length}"></td></tr>`;
+    }
+
+    /**
+     * Debounce utility function
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
