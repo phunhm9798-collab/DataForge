@@ -1063,10 +1063,177 @@
     }
 
 
+    // ============================================
+    // THEME TOGGLE
+    // ============================================
+
+    const THEME_STORAGE_KEY = 'dataforge_theme';
+
+    /**
+     * Initialize theme from localStorage or system preference
+     */
+    function initTheme() {
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }
+
+    /**
+     * Toggle between light and dark theme
+     */
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const newTheme = current === 'light' ? 'dark' : 'light';
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+
+        showToast(`Switched to ${newTheme} mode`, 'success');
+    }
+
+    /**
+     * Setup theme toggle event
+     */
+    function setupThemeToggle() {
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+    }
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+
+    /**
+     * Setup keyboard shortcuts
+     */
+    function setupKeyboardShortcuts() {
+        const shortcutsModal = document.getElementById('shortcutsModal');
+        const shortcutHelpBtn = document.getElementById('shortcutHelpBtn');
+
+        // Toggle shortcuts modal
+        function toggleShortcutsModal() {
+            shortcutsModal.classList.toggle('active');
+        }
+
+        // Help button click
+        if (shortcutHelpBtn) {
+            shortcutHelpBtn.addEventListener('click', toggleShortcutsModal);
+        }
+
+        // Close modal on click outside or Escape
+        if (shortcutsModal) {
+            shortcutsModal.addEventListener('click', (e) => {
+                if (e.target === shortcutsModal) {
+                    shortcutsModal.classList.remove('active');
+                }
+            });
+        }
+
+        // Global keyboard listener
+        document.addEventListener('keydown', (e) => {
+            // Ignore if typing in input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            // ? key - toggle shortcuts modal
+            if (e.key === '?' && !e.ctrlKey && !e.altKey) {
+                e.preventDefault();
+                toggleShortcutsModal();
+                return;
+            }
+
+            // Escape - close modal
+            if (e.key === 'Escape' && shortcutsModal.classList.contains('active')) {
+                shortcutsModal.classList.remove('active');
+                return;
+            }
+
+            // Ctrl + G - Generate
+            if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                handleGenerate();
+                return;
+            }
+
+            // Ctrl + Shift + C - Export CSV
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
+                e.preventDefault();
+                handleExportCSV();
+                return;
+            }
+
+            // Ctrl + Shift + J - Export JSON
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                handleExportJSON();
+                return;
+            }
+
+            // Ctrl + Shift + S - Export SQL
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                handleExportSQL();
+                return;
+            }
+
+            // Ctrl + Shift + X - Export XLSX
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'x') {
+                e.preventDefault();
+                handleExportXLSX();
+                return;
+            }
+
+            // Ctrl + Shift + T - Toggle theme
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+                e.preventDefault();
+                toggleTheme();
+                return;
+            }
+        });
+    }
+
+    // ============================================
+    // GLOBAL ERROR HANDLING
+    // ============================================
+
+    /**
+     * Setup global error handler
+     */
+    function setupErrorHandling() {
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error('Global error:', { message, source, lineno, colno, error });
+            showToast('An unexpected error occurred. Please try again.', 'error');
+            return true;
+        };
+
+        window.onunhandledrejection = function (event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            showToast('An unexpected error occurred. Please try again.', 'error');
+        };
+    }
+
+    // Initialize theme immediately (before DOM ready)
+    initTheme();
+
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setupThemeToggle();
+            setupKeyboardShortcuts();
+            setupErrorHandling();
+        });
     } else {
         init();
+        setupThemeToggle();
+        setupKeyboardShortcuts();
+        setupErrorHandling();
     }
 })();

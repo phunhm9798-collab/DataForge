@@ -22,6 +22,10 @@
 <body>
   <!-- Header -->
   <header class="header">
+    <div class="theme-toggle">
+      <span class="theme-label">Theme</span>
+      <button class="theme-toggle-btn" id="themeToggle" title="Toggle theme"></button>
+    </div>
     <div class="header-badge">
       <span class="dot"></span>
       <span>Data Science Tool</span>
@@ -329,6 +333,47 @@
   <script src="js/generators/logistics.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- Keyboard Shortcuts Help Button -->
+  <button class="shortcut-help-btn" id="shortcutHelpBtn" title="Keyboard shortcuts (?)">?</button>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div class="shortcuts-modal" id="shortcutsModal">
+    <div class="shortcuts-content">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <div class="shortcut-item">
+        <span>Generate Data</span>
+        <span class="shortcut-key">Ctrl + G</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Export CSV</span>
+        <span class="shortcut-key">Ctrl + Shift + C</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Export JSON</span>
+        <span class="shortcut-key">Ctrl + Shift + J</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Export SQL</span>
+        <span class="shortcut-key">Ctrl + Shift + S</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Export XLSX</span>
+        <span class="shortcut-key">Ctrl + Shift + X</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Toggle Theme</span>
+        <span class="shortcut-key">Ctrl + Shift + T</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Show/Hide Shortcuts</span>
+        <span class="shortcut-key">?</span>
+      </div>
+      <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.75rem; text-align: center;">
+        Press Escape or click outside to close
+      </p>
+    </div>
+  </div>
 </body>
 
 </html>
