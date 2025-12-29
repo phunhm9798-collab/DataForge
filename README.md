@@ -40,7 +40,7 @@ Generate data for 8 different industries:
 - 🌗 Dark/Light theme toggle with persistence
 - ⌨️ Keyboard shortcuts for power users
 - 📈 Quick statistics (Min, Max, Average)
-- 🔍 Search and filter data
+- 🔍 **Search by Column** — Filter data by specific columns or all columns
 - 📋 Column selection for export
 - 💾 Save/load configuration templates
 

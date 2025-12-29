@@ -283,9 +283,22 @@
 
         <!-- Search and Filters -->
         <div class="table-controls" id="tableControls">
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="tableSearch" placeholder="Search data...">
+          <div class="search-wrapper">
+            <div class="search-by">
+              <label for="searchColumn">Search in:</label>
+              <select id="searchColumn">
+                <option value="all">All Columns</option>
+                <!-- Options populated dynamically by JS -->
+              </select>
+            </div>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="tableSearch" placeholder="Search data...">
+              <button class="search-clear-btn hidden" id="searchClearBtn" title="Clear search">✕</button>
+            </div>
+          </div>
+          <div class="search-results hidden" id="searchResults">
+            <span id="searchResultsCount">0 results found</span>
           </div>
           <div class="column-toggle">
             <button class="btn btn-secondary btn-sm" id="selectAllColumns">Select All</button>

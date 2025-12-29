@@ -99,6 +99,7 @@
         renderTable();
         updateStats();
         enableExport();
+        updateSearchColumnDropdown();
 
         // Cache data for later retrieval
         cacheCurrentData();
@@ -197,6 +198,11 @@
             outlierFrequency: document.getElementById('outlierFrequency'),
             // New feature elements
             templateName: document.getElementById('templateName'),
+            // Enhanced search elements
+            searchColumn: document.getElementById('searchColumn'),
+            searchClearBtn: document.getElementById('searchClearBtn'),
+            searchResults: document.getElementById('searchResults'),
+            searchResultsCount: document.getElementById('searchResultsCount'),
             templateSelect: document.getElementById('templateSelect'),
             saveTemplateBtn: document.getElementById('saveTemplateBtn'),
             loadTemplateBtn: document.getElementById('loadTemplateBtn'),
@@ -271,8 +277,14 @@
         elements.exportJsonBtn.addEventListener('click', handleExportJSON);
         elements.exportSqlBtn.addEventListener('click', handleExportSQL);
 
-        // Search handler
+        // Search handlers
         elements.tableSearch.addEventListener('input', handleSearch);
+        if (elements.searchColumn) {
+            elements.searchColumn.addEventListener('change', handleSearch);
+        }
+        if (elements.searchClearBtn) {
+            elements.searchClearBtn.addEventListener('click', clearSearch);
+        }
 
         // Column selection handlers
         elements.selectAllColumns.addEventListener('click', selectAllColumns);
@@ -972,25 +984,101 @@
      * Handle search input
      */
     function handleSearch() {
-        state.searchQuery = elements.tableSearch.value.toLowerCase().trim();
+        const searchInput = document.getElementById('tableSearch');
+        const searchColumn = document.getElementById('searchColumn');
+        const searchClearBtn = document.getElementById('searchClearBtn');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsCount = document.getElementById('searchResultsCount');
+
+        if (!searchInput) return;
+
+        state.searchQuery = searchInput.value.toLowerCase().trim();
+        const selectedColumn = searchColumn ? searchColumn.value : 'all';
         state.currentPage = 1;
+
+        // Show/hide clear button
+        if (searchClearBtn) {
+            searchClearBtn.classList.toggle('hidden', !state.searchQuery);
+        }
 
         if (!state.searchQuery) {
             state.filteredData = [];
+            if (searchResults) searchResults.classList.add('hidden');
             renderTable();
             return;
         }
 
-        // Filter data by search query
+        // Filter data by search query and selected column
         state.filteredData = state.generatedData.filter(row => {
-            return Object.values(row).some(value => {
+            if (selectedColumn === 'all') {
+                // Search in all columns
+                return Object.values(row).some(value => {
+                    if (value === null || value === undefined) return false;
+                    return String(value).toLowerCase().includes(state.searchQuery);
+                });
+            } else {
+                // Search in specific column
+                const value = row[selectedColumn];
                 if (value === null || value === undefined) return false;
                 return String(value).toLowerCase().includes(state.searchQuery);
-            });
+            }
         });
+
+        // Show search results count
+        if (searchResults && searchResultsCount) {
+            searchResults.classList.remove('hidden');
+            const count = state.filteredData.length;
+            const columnLabel = selectedColumn === 'all' ? 'all columns' : selectedColumn.replace(/_/g, ' ');
+            searchResultsCount.textContent = `${count} result${count !== 1 ? 's' : ''} in ${columnLabel}`;
+        }
 
         renderTable();
         updateStats();
+    }
+
+    /**
+     * Clear search input
+     */
+    function clearSearch() {
+        const searchInput = document.getElementById('tableSearch');
+        const searchClearBtn = document.getElementById('searchClearBtn');
+        const searchResults = document.getElementById('searchResults');
+
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+        if (searchClearBtn) {
+            searchClearBtn.classList.add('hidden');
+        }
+        if (searchResults) {
+            searchResults.classList.add('hidden');
+        }
+
+        state.searchQuery = '';
+        state.filteredData = [];
+        state.currentPage = 1;
+        renderTable();
+    }
+
+    /**
+     * Populate search column dropdown with current schema columns
+     */
+    function updateSearchColumnDropdown() {
+        const searchColumn = document.getElementById('searchColumn');
+        if (!searchColumn || state.generatedData.length === 0) return;
+
+        const columns = Object.keys(state.generatedData[0]);
+
+        // Keep "All Columns" option and add column options
+        searchColumn.innerHTML = '<option value="all">All Columns</option>';
+
+        columns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            searchColumn.appendChild(option);
+        });
     }
 
     // ============================================
