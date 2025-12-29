@@ -5,7 +5,6 @@
 
 Generate realistic synthetic datasets for various industries in seconds. Export to CSV, XLSX, JSON, or SQL format.
 
-![DataForge Screenshot](https://raw.githubusercontent.com/phunhm9798-collab/DataForge/main/preview.png)
 
 ## 🌐 Live Demo
 
