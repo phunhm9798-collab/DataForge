@@ -1550,9 +1550,157 @@
                 state.selectedIndustry,
                 state.generatedData.length
             );
+            // Refresh history display
+            loadHistoryList();
         } catch (err) {
             console.warn('Failed to cache data:', err);
         }
+    }
+
+    // ============================================
+    // GENERATION HISTORY
+    // ============================================
+
+    const industryIcons = {
+        healthcare: '🏥',
+        finance: '💰',
+        retail: '🛒',
+        hr: '👥',
+        manufacturing: '🏭',
+        education: '🎓',
+        realestate: '🏠',
+        logistics: '📦'
+    };
+
+    /**
+     * Load and display generation history
+     */
+    async function loadHistoryList() {
+        const historyList = document.getElementById('historyList');
+        if (!historyList) return;
+
+        try {
+            const entries = await DataStorage.listEntries();
+
+            if (entries.length === 0) {
+                historyList.innerHTML = '<div class="history-empty">No history yet. Generate some data!</div>';
+                return;
+            }
+
+            historyList.innerHTML = entries.map(entry => `
+                <div class="history-item" data-id="${entry.id}">
+                    <div class="history-item-icon">${industryIcons[entry.industry] || '📊'}</div>
+                    <div class="history-item-info">
+                        <div class="history-item-title">${industryNames[entry.industry] || entry.industry} — ${entry.rowCount.toLocaleString()} rows</div>
+                        <div class="history-item-meta">${DataStorage.formatTimestamp(entry.timestamp)}</div>
+                    </div>
+                    <div class="history-item-actions">
+                        <button class="history-btn reload" data-id="${entry.id}" title="Load this data">↻</button>
+                        <button class="history-btn delete" data-id="${entry.id}" title="Delete">×</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add event listeners
+            historyList.querySelectorAll('.history-btn.reload').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    loadHistoryEntry(parseInt(btn.dataset.id));
+                });
+            });
+
+            historyList.querySelectorAll('.history-btn.delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteHistoryEntry(parseInt(btn.dataset.id));
+                });
+            });
+
+        } catch (err) {
+            console.warn('Failed to load history:', err);
+            historyList.innerHTML = '<div class="history-empty">Error loading history</div>';
+        }
+    }
+
+    /**
+     * Load a history entry
+     */
+    async function loadHistoryEntry(id) {
+        try {
+            const entry = await DataStorage.loadData(id);
+            if (entry && entry.data) {
+                state.generatedData = entry.data;
+                state.filteredData = [];
+                state.searchQuery = '';
+                state.currentPage = 1;
+                state.sortColumn = null;
+                state.sortDirection = 'asc';
+
+                // Update industry selection
+                if (entry.industry && entry.industry !== state.selectedIndustry) {
+                    state.selectedIndustry = entry.industry;
+                    document.querySelectorAll('.industry-option').forEach(opt => {
+                        opt.classList.toggle('selected', opt.dataset.industry === entry.industry);
+                    });
+                    updateSchemaPreview();
+                }
+
+                // Clear search
+                if (elements.tableSearch) {
+                    elements.tableSearch.value = '';
+                }
+
+                // Update UI
+                renderTable();
+                updateStats();
+                enableExport();
+
+                showToast(`Loaded ${entry.data.length.toLocaleString()} rows from history`, 'success');
+            }
+        } catch (err) {
+            console.error('Failed to load history entry:', err);
+            showToast('Failed to load history entry', 'error');
+        }
+    }
+
+    /**
+     * Delete a history entry
+     */
+    async function deleteHistoryEntry(id) {
+        try {
+            await DataStorage.deleteEntry(id);
+            loadHistoryList();
+            showToast('History entry deleted', 'success');
+        } catch (err) {
+            console.error('Failed to delete history entry:', err);
+            showToast('Failed to delete entry', 'error');
+        }
+    }
+
+    /**
+     * Setup history section toggle
+     */
+    function setupHistorySection() {
+        const toggle = document.getElementById('historyToggle');
+        const section = document.getElementById('historySection');
+
+        if (toggle && section) {
+            toggle.addEventListener('click', () => {
+                section.classList.toggle('collapsed');
+                toggle.setAttribute('aria-expanded', !section.classList.contains('collapsed'));
+            });
+
+            // Keyboard support
+            toggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle.click();
+                }
+            });
+        }
+
+        // Load initial history
+        loadHistoryList();
     }
 
     // Initialize theme immediately (before DOM ready)
@@ -1566,6 +1714,7 @@
             setupKeyboardShortcuts();
             setupErrorHandling();
             setupStatsPanel();
+            setupHistorySection();
         });
     } else {
         init();
@@ -1573,5 +1722,7 @@
         setupKeyboardShortcuts();
         setupErrorHandling();
         setupStatsPanel();
+        setupHistorySection();
     }
 })();
+

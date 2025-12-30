@@ -128,27 +128,37 @@
           <!-- Advanced Options Panel (Collapsible) -->
           <div class="advanced-panel hidden" id="advancedPanel">
             <div class="form-group">
-              <label for="dataQuality">Data Quality Preset</label>
+              <label for="dataQuality">
+                Data Quality Preset
+                <span class="info-icon"
+                  data-tooltip="Controls how realistic the generated data appears. Higher quality = more realistic but slower generation.">?</span>
+              </label>
               <select id="dataQuality">
-                <option value="quick">Quick & Random — Fast generation, more variance</option>
-                <option value="balanced" selected>Balanced — Good mix of speed and realism</option>
-                <option value="high">High Fidelity — Maximum realism, slower</option>
+                <option value="quick">Quick & Random — Fast generation</option>
+                <option value="balanced" selected>Balanced — Good mix of speed & realism</option>
+                <option value="high">High Fidelity — Maximum realism</option>
               </select>
-              <span class="form-hint">Controls overall data accuracy and realism</span>
             </div>
 
             <div class="form-group">
-              <label for="varianceLevel">Randomness / Variance</label>
+              <label for="varianceLevel">
+                Randomness / Variance
+                <span class="info-icon"
+                  data-tooltip="How much values differ from typical patterns. Low = predictable data, High = more random variation.">?</span>
+              </label>
               <select id="varianceLevel">
-                <option value="low">Low — Tight distributions, predictable</option>
+                <option value="low">Low — Tight distributions</option>
                 <option value="medium" selected>Medium — Natural variation</option>
                 <option value="high">High — Wide spread, more outliers</option>
               </select>
-              <span class="form-hint">How much values deviate from typical patterns</span>
             </div>
 
             <div class="form-group">
-              <label for="nullPercentage">Missing Values (%)</label>
+              <label for="nullPercentage">
+                Missing Values (%)
+                <span class="info-icon"
+                  data-tooltip="Percentage of cells that will be empty/null. Useful for testing missing data handling.">?</span>
+              </label>
               <select id="nullPercentage">
                 <option value="0" selected>0% — No missing data</option>
                 <option value="1">1% — Rare gaps</option>
@@ -156,18 +166,20 @@
                 <option value="10">10% — Moderate gaps</option>
                 <option value="20">20% — Significant gaps</option>
               </select>
-              <span class="form-hint">Percentage of cells with null/empty values</span>
             </div>
 
             <div class="form-group">
-              <label for="outlierFrequency">Outlier Frequency</label>
+              <label for="outlierFrequency">
+                Outlier Frequency
+                <span class="info-icon"
+                  data-tooltip="How often extreme/unusual values appear. Useful for testing edge case handling.">?</span>
+              </label>
               <select id="outlierFrequency">
                 <option value="none">None — Clean data only</option>
                 <option value="rare" selected>Rare — ~1% unusual values</option>
                 <option value="occasional">Occasional — ~5% edge cases</option>
                 <option value="frequent">Frequent — ~10% extreme values</option>
               </select>
-              <span class="form-hint">Frequency of unusual or extreme data points</span>
             </div>
           </div>
 
@@ -209,6 +221,22 @@
                 <span>🗑️</span>
                 <span>Delete</span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generation History Card -->
+        <div class="card" id="historyCard">
+          <div class="history-section" id="historySection">
+            <div class="history-header" id="historyToggle" role="button" tabindex="0" aria-expanded="true">
+              <h4>
+                <span>📜</span>
+                <span>Generation History</span>
+              </h4>
+              <span class="history-toggle">▼</span>
+            </div>
+            <div class="history-list" id="historyList">
+              <div class="history-empty">No history yet. Generate some data!</div>
             </div>
           </div>
         </div>
