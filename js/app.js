@@ -18,6 +18,8 @@
         // Sorting state
         sortColumn: null,
         sortDirection: 'asc', // 'asc' or 'desc'
+        // Column order for drag & drop reordering
+        columnOrder: [],
         // Virtual scrolling state
         virtualScroll: {
             rowHeight: 40,
@@ -38,6 +40,146 @@
             outlierFrequency: 'rare'
         }
     };
+
+    // Undo/Redo History
+    const MAX_HISTORY = 20;
+    const undoStack = [];
+    const redoStack = [];
+
+    /**
+     * Save current state for undo functionality
+     * @param {string} action - Description of the action being saved
+     */
+    function saveStateForUndo(action) {
+        const snapshot = {
+            action: action,
+            generatedData: JSON.parse(JSON.stringify(state.generatedData)),
+            selectedIndustry: state.selectedIndustry,
+            sortColumn: state.sortColumn,
+            sortDirection: state.sortDirection,
+            columnOrder: [...state.columnOrder]
+        };
+
+        undoStack.push(snapshot);
+
+        // Limit stack size
+        if (undoStack.length > MAX_HISTORY) {
+            undoStack.shift();
+        }
+
+        // Clear redo stack on new action
+        redoStack.length = 0;
+
+        updateUndoRedoButtons();
+    }
+
+    /**
+     * Perform undo operation
+     */
+    function performUndo() {
+        if (undoStack.length === 0) {
+            showToast('Nothing to undo', 'info');
+            return;
+        }
+
+        // Save current state to redo stack
+        const currentSnapshot = {
+            action: 'Redo point',
+            generatedData: JSON.parse(JSON.stringify(state.generatedData)),
+            selectedIndustry: state.selectedIndustry,
+            sortColumn: state.sortColumn,
+            sortDirection: state.sortDirection,
+            columnOrder: [...state.columnOrder]
+        };
+        redoStack.push(currentSnapshot);
+
+        // Restore previous state
+        const snapshot = undoStack.pop();
+        state.generatedData = snapshot.generatedData;
+        state.selectedIndustry = snapshot.selectedIndustry;
+        state.sortColumn = snapshot.sortColumn;
+        state.sortDirection = snapshot.sortDirection;
+        state.columnOrder = snapshot.columnOrder;
+        state.filteredData = [];
+        state.searchQuery = '';
+        state.currentPage = 1;
+
+        // Clear search
+        if (elements.tableSearch) {
+            elements.tableSearch.value = '';
+        }
+
+        // Update UI
+        renderTable();
+        updateStats();
+        updateUndoRedoButtons();
+
+        showToast(`Undid: ${snapshot.action}`, 'success');
+    }
+
+    /**
+     * Perform redo operation
+     */
+    function performRedo() {
+        if (redoStack.length === 0) {
+            showToast('Nothing to redo', 'info');
+            return;
+        }
+
+        // Save current state to undo stack
+        const currentSnapshot = {
+            action: 'Undo point',
+            generatedData: JSON.parse(JSON.stringify(state.generatedData)),
+            selectedIndustry: state.selectedIndustry,
+            sortColumn: state.sortColumn,
+            sortDirection: state.sortDirection,
+            columnOrder: [...state.columnOrder]
+        };
+        undoStack.push(currentSnapshot);
+
+        // Restore redo state
+        const snapshot = redoStack.pop();
+        state.generatedData = snapshot.generatedData;
+        state.selectedIndustry = snapshot.selectedIndustry;
+        state.sortColumn = snapshot.sortColumn;
+        state.sortDirection = snapshot.sortDirection;
+        state.columnOrder = snapshot.columnOrder;
+        state.filteredData = [];
+        state.searchQuery = '';
+        state.currentPage = 1;
+
+        // Clear search
+        if (elements.tableSearch) {
+            elements.tableSearch.value = '';
+        }
+
+        // Update UI
+        renderTable();
+        updateStats();
+        updateUndoRedoButtons();
+
+        showToast('Redid action', 'success');
+    }
+
+    /**
+     * Update undo/redo button states
+     */
+    function updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+
+        if (undoBtn) {
+            undoBtn.disabled = undoStack.length === 0;
+            undoBtn.title = undoStack.length > 0
+                ? `Undo: ${undoStack[undoStack.length - 1].action}`
+                : 'Nothing to undo';
+        }
+
+        if (redoBtn) {
+            redoBtn.disabled = redoStack.length === 0;
+            redoBtn.title = redoStack.length > 0 ? 'Redo' : 'Nothing to redo';
+        }
+    }
 
     // Initialize Web Worker if available
     function initWorker() {
@@ -289,6 +431,16 @@
         // Column selection handlers
         elements.selectAllColumns.addEventListener('click', selectAllColumns);
         elements.deselectAllColumns.addEventListener('click', deselectAllColumns);
+
+        // Undo/Redo button handlers
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        if (undoBtn) {
+            undoBtn.addEventListener('click', performUndo);
+        }
+        if (redoBtn) {
+            redoBtn.addEventListener('click', performRedo);
+        }
     }
 
     /**
@@ -476,6 +628,11 @@
             return;
         }
 
+        // Save state for undo before generating new data
+        if (state.generatedData.length > 0) {
+            saveStateForUndo('Generate Data');
+        }
+
         // Apply advanced options before generation
         updateAdvancedOptions();
 
@@ -622,37 +779,51 @@
 
         const headers = Object.keys(displayData[0]);
 
-        // Render headers with sorting support and row number column
+        // Use custom column order if set, otherwise use default
+        const orderedHeaders = state.columnOrder.length === headers.length &&
+            state.columnOrder.every(h => headers.includes(h))
+            ? state.columnOrder
+            : headers;
+
+        // Render headers with sorting support, draggable, and row number column
         elements.tableHead.innerHTML = `
       <tr>
         <th class="row-number" aria-label="Row number">#</th>
-        ${headers.map(h => {
+        ${orderedHeaders.map(h => {
             const sortClass = state.sortColumn === h
-                ? (state.sortDirection === 'asc' ? 'sortable sort-asc' : 'sortable sort-desc')
-                : 'sortable';
+                ? (state.sortDirection === 'asc' ? 'sortable sort-asc draggable' : 'sortable sort-desc draggable')
+                : 'sortable draggable';
             return `<th class="${sortClass}" data-column="${h}" role="columnheader" aria-sort="${state.sortColumn === h ? state.sortDirection + 'ending' : 'none'
-                }">${formatHeader(h)}</th>`;
+                }" draggable="true">${formatHeader(h)}</th>`;
         }).join('')}
       </tr>
     `;
 
         // Add click handlers for sorting
         elements.tableHead.querySelectorAll('th.sortable').forEach(th => {
-            th.addEventListener('click', () => {
+            th.addEventListener('click', (e) => {
+                // Don't sort if we just finished a drag
+                if (th.classList.contains('just-dropped')) {
+                    th.classList.remove('just-dropped');
+                    return;
+                }
                 handleColumnSort(th.dataset.column);
             });
         });
+
+        // Add drag and drop handlers for column reordering
+        setupColumnDragDrop(orderedHeaders);
 
         // Get page data
         const startIndex = (state.currentPage - 1) * state.rowsPerPage;
         const endIndex = startIndex + state.rowsPerPage;
         const pageData = displayData.slice(startIndex, endIndex);
 
-        // Render rows with row numbers
+        // Render rows with row numbers using ordered headers
         elements.tableBody.innerHTML = pageData.map((row, idx) => `
       <tr>
         <td class="row-number">${startIndex + idx + 1}</td>
-        ${headers.map(h => `<td title="${escapeHtml(row[h])}">${formatCell(row[h])}</td>`).join('')}
+        ${orderedHeaders.map(h => `<td title="${escapeHtml(row[h])}">${formatCell(row[h])}</td>`).join('')}
       </tr>
     `).join('');
 
@@ -661,6 +832,62 @@
 
         // Update statistics
         updateStatistics();
+    }
+
+    /**
+     * Setup column drag and drop reordering
+     */
+    function setupColumnDragDrop(currentHeaders) {
+        let draggedColumn = null;
+
+        elements.tableHead.querySelectorAll('th.draggable').forEach(th => {
+            th.addEventListener('dragstart', (e) => {
+                draggedColumn = th.dataset.column;
+                th.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            th.addEventListener('dragend', () => {
+                th.classList.remove('dragging');
+                document.querySelectorAll('th.drag-over').forEach(el => el.classList.remove('drag-over'));
+            });
+
+            th.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (th.dataset.column !== draggedColumn) {
+                    th.classList.add('drag-over');
+                }
+            });
+
+            th.addEventListener('dragleave', () => {
+                th.classList.remove('drag-over');
+            });
+
+            th.addEventListener('drop', (e) => {
+                e.preventDefault();
+                th.classList.remove('drag-over');
+                th.classList.add('just-dropped');
+
+                if (!draggedColumn || th.dataset.column === draggedColumn) return;
+
+                // Save state before reordering
+                saveStateForUndo('Reorder columns');
+
+                // Reorder columns
+                const targetColumn = th.dataset.column;
+                const newOrder = [...currentHeaders];
+                const fromIndex = newOrder.indexOf(draggedColumn);
+                const toIndex = newOrder.indexOf(targetColumn);
+
+                if (fromIndex > -1 && toIndex > -1) {
+                    newOrder.splice(fromIndex, 1);
+                    newOrder.splice(toIndex, 0, draggedColumn);
+                    state.columnOrder = newOrder;
+                    renderTable();
+                    showToast('Columns reordered', 'success');
+                }
+            });
+        });
     }
 
     /**
@@ -1312,6 +1539,21 @@
                 toggleTheme();
                 return;
             }
+
+            // Ctrl + Z - Undo
+            if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                performUndo();
+                return;
+            }
+
+            // Ctrl + Y or Ctrl + Shift + Z - Redo
+            if ((e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'y') ||
+                (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z')) {
+                e.preventDefault();
+                performRedo();
+                return;
+            }
         });
     }
 
@@ -1343,6 +1585,9 @@
      * Handle column header click for sorting
      */
     function handleColumnSort(columnName) {
+        // Save state for undo before sorting
+        saveStateForUndo('Sort by ' + columnName);
+
         if (state.sortColumn === columnName) {
             // Toggle direction
             state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -1468,8 +1713,8 @@
 
         let html = '';
 
-        // Calculate stats for first 4 numeric columns max
-        numericColumns.slice(0, 4).forEach(col => {
+        // Calculate stats for first 3 numeric columns max (to make room for charts)
+        numericColumns.slice(0, 3).forEach(col => {
             const values = data.map(row => row[col]).filter(v => v != null && typeof v === 'number');
 
             if (values.length === 0) return;
@@ -1479,20 +1724,30 @@
             const sum = values.reduce((a, b) => a + b, 0);
             const avg = sum / values.length;
 
+            // Generate histogram bars
+            const histogramHtml = generateHistogramHtml(values, 8);
+
             html += `
-                <div class="stat-item">
+                <div class="stat-item stat-item-chart">
                     <div class="stat-item-header">Min</div>
                     <div class="stat-item-value">${min.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
                     <div class="stat-item-column">${formatHeader(col)}</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item stat-item-chart">
                     <div class="stat-item-header">Max</div>
                     <div class="stat-item-value">${max.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
                     <div class="stat-item-column">${formatHeader(col)}</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item stat-item-chart">
                     <div class="stat-item-header">Average</div>
                     <div class="stat-item-value">${avg.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                    <div class="stat-item-column">${formatHeader(col)}</div>
+                </div>
+                <div class="stat-item stat-item-chart">
+                    <div class="stat-item-header">Distribution</div>
+                    <div class="stat-mini-chart" title="Value distribution for ${formatHeader(col)}">
+                        ${histogramHtml}
+                    </div>
                     <div class="stat-item-column">${formatHeader(col)}</div>
                 </div>
             `;
@@ -1509,6 +1764,36 @@
 
         statsGrid.innerHTML = html;
     }
+
+    /**
+     * Generate histogram HTML from numeric values
+     */
+    function generateHistogramHtml(values, buckets = 8) {
+        if (values.length === 0) return '';
+
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min || 1;
+        const bucketSize = range / buckets;
+
+        // Create buckets
+        const counts = new Array(buckets).fill(0);
+        values.forEach(v => {
+            const idx = Math.min(Math.floor((v - min) / bucketSize), buckets - 1);
+            counts[idx]++;
+        });
+
+        const maxCount = Math.max(...counts);
+
+        // Generate bars
+        return counts.map((count, idx) => {
+            const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
+            const rangeStart = (min + idx * bucketSize).toFixed(0);
+            const rangeEnd = (min + (idx + 1) * bucketSize).toFixed(0);
+            return `<div class="bar" style="height: ${height}%" title="${count} values (${rangeStart}-${rangeEnd})"></div>`;
+        }).join('');
+    }
+
 
     /**
      * Setup statistics panel toggle

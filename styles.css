@@ -2029,3 +2029,126 @@ select:focus-visible {
 .clear-history-btn:hover {
   color: var(--color-danger);
 }
+
+/* ============================================
+   UNDO/REDO CONTROLS
+   ============================================ */
+
+.undo-redo-controls {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.undo-redo-controls .btn {
+  min-width: auto;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.undo-redo-controls .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   COLUMN REORDERING (DRAG & DROP)
+   ============================================ */
+
+.data-table th.draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.data-table th.draggable:active {
+  cursor: grabbing;
+}
+
+.data-table th.dragging {
+  opacity: 0.5;
+  background: var(--accent-primary) !important;
+}
+
+.data-table th.drag-over {
+  border-left: 3px solid var(--accent-primary);
+}
+
+.data-table th.drag-over-right {
+  border-right: 3px solid var(--accent-primary);
+}
+
+/* ============================================
+   DATA DISTRIBUTION CHARTS
+   ============================================ */
+
+.stat-chart-container {
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mini-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 40px;
+  min-width: 80px;
+}
+
+.histogram-bar {
+  flex: 1;
+  min-width: 4px;
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease, opacity 0.2s ease;
+}
+
+.histogram-bar:hover {
+  opacity: 0.8;
+  transform: scaleY(1.1);
+  transform-origin: bottom;
+}
+
+.sparkline {
+  width: 100%;
+  height: 30px;
+  margin-top: var(--space-xs);
+}
+
+.sparkline path {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sparkline .area {
+  fill: var(--accent-primary);
+  opacity: 0.2;
+}
+
+/* Stats item with chart */
+.stat-item-chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-mini-chart {
+  height: 32px;
+  margin-top: var(--space-xs);
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.stat-mini-chart .bar {
+  flex: 1;
+  background: var(--accent-primary);
+  border-radius: 1px 1px 0 0;
+  min-width: 3px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.stat-mini-chart .bar:hover {
+  opacity: 1;
+}
