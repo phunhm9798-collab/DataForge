@@ -1,92 +1,104 @@
-# ⚡ DataForge — Synthetic Data Generator
+# DataForge — Synthetic Data Generator
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://phunhm9798-collab.github.io/DataForge/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+A browser-based tool for generating realistic synthetic datasets across multiple industries. Export to CSV, Excel, JSON, or SQL format.
 
-Generate realistic synthetic datasets for various industries in seconds. Export to CSV, XLSX, JSON, or SQL format.
+**Live Demo**: [https://phunhm9798-collab.github.io/DataForge/](https://phunhm9798-collab.github.io/DataForge/)
 
+---
 
-## 🌐 Live Demo
+## What It Does
 
-**[https://phunhm9798-collab.github.io/DataForge/](https://phunhm9798-collab.github.io/DataForge/)**
+DataForge generates fake but realistic data for testing, development, and demos. Choose an industry, specify how many rows you need, and export in your preferred format.
 
-## ✨ Features
+### Supported Industries
 
-### 🏭 Industry Templates
-Generate data for 8 different industries:
-- 🏥 Healthcare — Patient records, diagnoses, treatments
-- 💰 Finance — Transactions, accounts, fraud detection
-- 🛒 Retail — Orders, products, customers
-- 👥 HR — Employees, salaries, performance
-- 🏭 Manufacturing — Production, quality, inventory
-- 🎓 Education — Students, courses, grades
-- 🏠 Real Estate — Properties, listings, agents
-- 📦 Logistics — Shipments, tracking, delivery
+- **Healthcare** — Patient records, diagnoses, treatments
+- **Finance** — Transactions, accounts, fraud detection data
+- **Retail** — Orders, products, customers
+- **HR** — Employees, salaries, performance reviews
+- **Manufacturing** — Production batches, quality metrics
+- **Education** — Students, courses, grades
+- **Real Estate** — Property listings, agents
+- **Logistics** — Shipments, tracking, delivery status
 
-### 📊 Data Generation
-- Generate up to **100,000 rows** with Web Worker support
-- Virtual scrolling for smooth table navigation
-- Real-time progress tracking
-- Advanced options: data quality, variance, null values, outliers
+---
 
-### 📤 Export Options
-- **CSV** — Comma-separated values
-- **XLSX** — Excel spreadsheet with styled headers
-- **JSON** — Formatted JSON data
-- **SQL** — INSERT statements for database import
+## Features
 
-### 🎨 User Experience
-- 🌗 Dark/Light theme toggle with persistence
-- ⌨️ Keyboard shortcuts for power users
-- 📈 Quick statistics (Min, Max, Average)
-- 🔍 **Search by Column** — Filter data by specific columns or all columns
-- 📋 Column selection for export
-- 💾 Save/load configuration templates
+### Data Generation
+- Generate up to 100,000 rows using Web Workers
+- Configure data quality, variance, and outlier frequency
+- Add missing values to test null handling
+- Virtual scrolling keeps large tables responsive
 
-## ⌨️ Keyboard Shortcuts
+### Data Preview
+- Search and filter generated data
+- Sort by any column (click headers)
+- Drag columns to reorder them
+- Row numbers for easy reference
+- Quick statistics with distribution charts
+
+### Export Options
+- **CSV** — Standard comma-separated values
+- **Excel** — Styled .xlsx with headers
+- **JSON** — Formatted for APIs
+- **SQL** — INSERT statements ready for databases
+
+### Productivity
+- Save and load configuration templates
+- Generation history with quick reload
+- Undo/Redo (Ctrl+Z / Ctrl+Y)
+- Dark and light themes
+- Keyboard shortcuts for power users
+
+---
+
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl + G` | Generate Data |
-| `Ctrl + Shift + C` | Export CSV |
-| `Ctrl + Shift + J` | Export JSON |
-| `Ctrl + Shift + S` | Export SQL |
-| `Ctrl + Shift + X` | Export XLSX |
-| `Ctrl + Shift + T` | Toggle Theme |
-| `?` | Show Shortcuts |
+| Ctrl + G | Generate data |
+| Ctrl + Shift + C | Export CSV |
+| Ctrl + Shift + J | Export JSON |
+| Ctrl + Shift + S | Export SQL |
+| Ctrl + Shift + X | Export Excel |
+| Ctrl + Shift + T | Toggle theme |
+| Ctrl + Z | Undo |
+| Ctrl + Y | Redo |
+| ? | Show shortcuts help |
 
-## 🚀 Getting Started
+---
 
-### Option 1: Use the Live Demo
+## Getting Started
+
+### Use Online
 Visit [https://phunhm9798-collab.github.io/DataForge/](https://phunhm9798-collab.github.io/DataForge/)
 
-### Option 2: Run Locally
+### Run Locally
 ```bash
-# Clone the repository
 git clone https://github.com/phunhm9798-collab/DataForge.git
-
-# Navigate to directory
 cd DataForge
-
-# Open in browser (no build required)
-# Simply open index.html in your browser
-# Or use a local server:
+# Open index.html in your browser, or use a local server:
 npx serve .
 ```
 
-## 📁 Project Structure
+No build step required — it's plain HTML, CSS, and JavaScript.
+
+---
+
+## Project Structure
 
 ```
 DataForge/
-├── index.html          # Main HTML file
-├── styles.css          # All CSS styles
+├── index.html          # Main page
+├── styles.css          # All styles
 ├── js/
-│   ├── app.js          # Main application logic
+│   ├── app.js          # Application logic
 │   ├── export.js       # Export functionality
 │   ├── storage.js      # IndexedDB caching
-│   ├── worker.js       # Web Worker for large datasets
+│   ├── worker.js       # Background data generation
 │   └── generators/     # Industry-specific generators
-│       ├── base.js     # Base utilities
+│       ├── base.js
 │       ├── healthcare.js
 │       ├── finance.js
 │       ├── retail.js
@@ -98,31 +110,33 @@ DataForge/
 └── README.md
 ```
 
-## 🛠️ Technologies
+---
 
-- **HTML5** — Semantic structure
-- **CSS3** — Custom properties, Flexbox, Grid
-- **Vanilla JavaScript** — No frameworks required
-- **Web Workers** — Background processing
-- **IndexedDB** — Client-side data caching
-- **SheetJS** — Excel export support
+## Technologies
 
-## ♿ Accessibility
-
-- Skip link for keyboard navigation
-- ARIA labels on interactive elements
-- Focus ring indicators
-- High contrast mode support
-- Reduced motion preference support
-
-## 📄 License
-
-MIT License — feel free to use for personal or commercial projects.
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to submit issues and pull requests.
+- HTML5, CSS3, vanilla JavaScript
+- Web Workers for background processing
+- IndexedDB for local data caching
+- SheetJS library for Excel export
 
 ---
 
-Made with ❤️ for data scientists, developers, and testers.
+## Accessibility
+
+- Skip link for keyboard navigation
+- ARIA labels on interactive elements
+- Visible focus indicators
+- Respects reduced motion preferences
+- High contrast mode support
+
+---
+
+## License
+
+MIT License — free for personal and commercial use.
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome.
